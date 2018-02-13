@@ -99,6 +99,8 @@ mamaTransportImpl_getPlugins (mamaTransport transport, mamaPluginImpl*** results
 mama_status
 mamaTransportImpl_getPluginNo (mamaTransport transport, int* result);
 
+mama_status
+mamaTransportImpl_getDQDisabled (mamaTransport transport, int* result);
 #if defined(__cplusplus)
 }
 #endif

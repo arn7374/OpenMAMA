@@ -414,24 +414,6 @@ mamaPlugin_fireTransportPostCreateHook (mamaTransport transport)
     mamaPluginImpl** transportPlugins = NULL;
     int              tPluginNo        = 0;
 
-    for (plugin = 0; plugin < gPluginNo; plugin++)
-    {
-        if (gPlugins[plugin] != NULL)
-        {
-            if (gPlugins[plugin]->mamaPluginTransportPostCreateHook != NULL)
-            {
-                status = gPlugins[plugin]->mamaPluginTransportPostCreateHook (gPlugins[plugin]->mPluginInfo, transport);
-
-                if (MAMA_STATUS_OK != status)
-                {
-                     mama_log (MAMA_LOG_LEVEL_WARN,
-                                "mamaPlugin_fireTransportPostCreateHook(): Transport post create hook failed for mama plugin [%s]",
-                                gPlugins[plugin]->mPluginName);
-                }
-            }
-        }
-    }
-
     mamaTransportImpl_getPlugins(transport, &transportPlugins);
     
     if(transportPlugins != NULL)
@@ -490,23 +472,6 @@ mamaPlugin_fireSubscriptionPostCreateHook (mamaSubscription subscription)
     mamaTransport    transport        = NULL;
     mamaPluginImpl** transportPlugins = NULL;
     int              tPluginNo        = 0;
-    for (plugin = 0; plugin < gPluginNo; plugin++)
-    {
-        if (gPlugins[plugin] != NULL)
-        {
-            if (gPlugins[plugin]->mamaPluginSubscriptionPostCreateHook != NULL)
-            {
-                status = gPlugins[plugin]->mamaPluginSubscriptionPostCreateHook (gPlugins[plugin]->mPluginInfo, subscription);
-
-                if (MAMA_STATUS_OK != status)
-                {
-                     mama_log (MAMA_LOG_LEVEL_WARN,
-                                "mamaPlugin_subscriptionPostCreateHook(): Subscription post create hook failed for mama plugin [%s]",
-                                gPlugins[plugin]->mPluginName);
-                }
-            }
-        }
-    }
 
     mamaSubscription_getTransport(subscription, &transport);
 
@@ -546,24 +511,6 @@ mamaPlugin_fireSubscriptionPreMsgHook      (mamaSubscription subscription, int m
     mamaPluginImpl** transportPlugins = NULL;
     int              tPluginNo        = 0;
 
-    for (plugin = 0; plugin < gPluginNo; plugin++)
-    {
-        if (gPlugins[plugin] != NULL)
-        {
-            if (gPlugins[plugin]->mamaPluginSubscriptionPreMsgHook != NULL)
-            {
-                status = gPlugins[plugin]->mamaPluginSubscriptionPreMsgHook (gPlugins[plugin]->mPluginInfo, subscription, msgType, msg);
-
-                if (MAMA_STATUS_OK != status)
-                {
-                     mama_log (MAMA_LOG_LEVEL_WARN,
-                                "mamaPlugin_subscriptionPreMsgHook      (): Subscription pre msg hook failed for mama plugin [%s]",
-                                gPlugins[plugin]->mPluginName);
-                }
-            }
-        }
-    }
-    
     mamaSubscription_getTransport(subscription, &transport);
 
     mamaTransportImpl_getPlugins(transport, &transportPlugins);
@@ -596,24 +543,6 @@ mamaPlugin_fireTransportEventHook(mamaTransport transport, int setStale, mamaTra
     int          plugin = 0;
     mamaPluginImpl** transportPlugins = NULL;
     int              tPluginNo        = 0;
-
-    for (plugin = 0; plugin < gPluginNo; plugin++)
-    {
-        if (gPlugins[plugin] != NULL)
-        {
-            if (gPlugins[plugin]->mamaPluginTransportEventHook       != NULL)
-            {
-                status = gPlugins[plugin]->mamaPluginTransportEventHook(gPlugins[plugin]->mPluginInfo, transport, setStale, tportEvent);
-
-                if (MAMA_STATUS_OK != status)
-                {
-                     mama_log (MAMA_LOG_LEVEL_WARN,
-                                "mamaPlugin_transportEventHook      (): Transport event hook failed for mama plugin [%s]",
-                                gPlugins[plugin]->mPluginName);
-                }
-            }
-        }
-    }
 
     mamaTransportImpl_getPlugins(transport, &transportPlugins);
 

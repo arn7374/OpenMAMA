@@ -1217,8 +1217,14 @@ void
 mamaSubscription_stopWaitForResponse (mamaSubscription subscription,
                                       SubjectContext* ctx)
 {
-    imageRequest_stopWaitForResponse (self->mInitialRequest);
-    imageRequest_stopWaitForResponse (ctx->mDqContext.mRecapRequest);
+    if(self->mInitialRequest != NULL)
+    {
+        imageRequest_stopWaitForResponse (self->mInitialRequest);
+    }
+    if(ctx->mDqContext.mRecapRequest != NULL)
+    {
+        imageRequest_stopWaitForResponse (ctx->mDqContext.mRecapRequest);
+    }
 }
 
 int
@@ -3378,4 +3384,27 @@ mamaSubscription_setDqStrategy(mamaSubscription subscription, dqStrategy strateg
         return MAMA_STATUS_OK;
     }
         return MAMA_STATUS_NULL_ARG;
+}
+
+mama_status
+mamaSubscription_setRecapRequest(mamaSubscription subscription, imageRequest request)
+{
+    if(NULL != subscription && NULL != request)   
+    {
+       subscription->mRecapRequest = request;
+       return MAMA_STATUS_OK;
+    }
+
+    return MAMA_STATUS_NULL_ARG;
+}
+mama_status
+mamaSubscription_getRecapRequest(mamaSubscription subscription, imageRequest request)
+{
+    if(NULL != subscription && NULL != request)   
+    {
+       request = subscription->mRecapRequest;
+       return MAMA_STATUS_OK;
+    }
+
+    return MAMA_STATUS_NULL_ARG;
 }

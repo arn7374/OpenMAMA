@@ -97,7 +97,7 @@ typedef struct transportImpl_
     wombatThrottle           mRecapThrottle;
     mamaSymbolMapFunc        mMapFunc;
     void*                    mMapFuncClosure;
-
+    int                      mDQDisabled;
     uint32_t                 mWriteQueueHighWatermark;
     uint32_t                 mWriteQueueLowWatermark;
     /* These members are only needed for the market data transport */
@@ -195,12 +195,11 @@ typedef struct transportImpl_
 static mama_status
 init (transportImpl* transport, int createResponder)
 {
-    int         isUsingDq;
-    const char* findplugin_name;  
-    char        dqplugin_name[256];
-    char        defaultplugin_name[256];
+    //used to search for config options
+    char        searchName[256];
+    const char* searchResult;
     const char* middleware               = NULL;
-
+    int         dqDisabled               = 0;
     mama_status rval                     = MAMA_STATUS_OK;
     self->mListeners                     = list_create (sizeof (SubscriptionInfo));
     self->mPublishers                    = list_create (sizeof (mamaPublisher));
@@ -234,38 +233,66 @@ init (transportImpl* transport, int createResponder)
     }
     middleware = self->mBridgeImpl->bridgeGetName ();
 
-    //e.g.mama.wmw.transport.tcp_sub.mama.plugin.name_=dqpluginexample 
-    snprintf(dqplugin_name, sizeof(dqplugin_name), "mama.%s.transport.%s.%s", middleware, self->mName, PLUGIN_PROPERTY);
-    findplugin_name = mama_getProperty(dqplugin_name);
-    
-    if(findplugin_name != NULL)
-    {
-        self->mPlugins[self->mPluginNo] = mamaPlugin_findPlugin(findplugin_name);
-    }
-    
-    if(self->mPlugins[self->mPluginNo] != NULL)
-    {
-        self->mPluginNo++;
-    }
-    else
-    {
-        isUsingDq = mamaPlugin_isUsingDq();
+    //build the string to search for a config option for disabling DQ 
+    snprintf(searchName, sizeof(searchName), "mama.%s.dq.disabled", middleware);
 
-        if(isUsingDq)
+    //then check if dq is disabled
+    dqDisabled = strtobool(mama_getProperty(searchName));
+
+    //if dq not globally disabled
+    if(!dqDisabled)
+    { 
+        dqDisabled  = 0;
+        *searchName = '\0';
+
+        //build the string to search for a config option for disabling DQ 
+        snprintf(searchName, sizeof(searchName), "mama.%s.transport.%s.dq.disabled", middleware, self->mName);
+
+        //then check if dq is disabled
+        dqDisabled = strtobool(mama_getProperty(searchName));
+
+        //if dq not disabled
+        if(!dqDisabled)
         {
-            //load mama default
-            self->mPlugins[self->mPluginNo] = mamaPlugin_findPlugin("dqstrategy");
+            *searchName = '\0';
+        
+            //search for a custom dq plugin
+            snprintf(searchName, sizeof(searchName), "mama.%s.transport.%s.%s", middleware, self->mName, PLUGIN_PROPERTY);
+            searchResult = mama_getProperty(searchName);
 
-            if(self->mPlugins[self->mPluginNo] != NULL)
+            //if a custom dq plugin is found, load it
+            if(searchResult != NULL)
             {
-               self->mPluginNo++;
+                self->mPlugins[self->mPluginNo] = mamaPlugin_findPlugin(searchResult);
+            }
+    
+            //if loading was successful, increment the plugin count
+            if(self->mPlugins[self->mPluginNo] != NULL)
+            { 
+                self->mPluginNo++;
+            }
+            else
+            {
+                //if loading wasnt successful, load default DQ plugin
+                self->mPlugins[self->mPluginNo] = mamaPlugin_findPlugin("dqstrategy");
+    
+                //check if loading of defualt was successful, print error if not
+                if(self->mPlugins[self->mPluginNo] != NULL)
+                {
+                    self->mPluginNo++;
+                }
+                else
+                {
+                    mama_log (MAMA_LOG_LEVEL_ERROR, "error in transport: %s init, default DQ missing", self->mName);
+                }
+    
             }
         }
+        else
+        {
+            self->mDQDisabled = 1;
+        }
     }
-
-
-
-
 
     return MAMA_STATUS_OK;
 }
@@ -3000,6 +3027,17 @@ mama_status mamaTransportImpl_getPluginNo(mamaTransport transport, int* result)
     if(transport != NULL)
     {
         *result = self->mPluginNo;
+        return MAMA_STATUS_OK;
+    }
+    
+    return MAMA_STATUS_NULL_ARG;
+}
+
+mama_status mamaTransportImpl_getDQDisabled(mamaTransport transport, int* result)
+{
+    if(transport != NULL)
+    {
+        *result = self->mDQDisabled;
         return MAMA_STATUS_OK;
     }
     
